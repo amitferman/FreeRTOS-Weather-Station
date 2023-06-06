@@ -12,20 +12,23 @@
 #define d6 44
 #define d7 45
 
-#define WEATHER_EMOJI_DEGREES byte(0)
-#define WEATHER_EMOJI_CLOUDY byte(1)  
-
+#define CLOUDY_WEATHER 0
+#define SUNNY_WEATHER 1
 
 void setupLCD();
 
-void writeWeatherEmoji(const byte b);
+void refreshLCD();
 
-void writeTemp(const uint8_t v);
+void scrollLCD();
 
-void writeHumidity(const uint8_t v);
+void updateWeatherConditions(const byte b);
 
-void writeBrightness(const uint8_t v);
+void updateTemp(const uint8_t v);
 
-void writeClock(const Clock &clock);
+void updateHumidity(const uint8_t v);
+
+void updateBrightness(const uint8_t v);
+
+void updateClock(const Clock &clock);
 
 #endif // _DISPLAY_H_

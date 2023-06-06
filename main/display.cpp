@@ -1,14 +1,8 @@
 #include "display.h"
 
-byte degrees[8] = {
-    0b00100,
-    0b01010,
-    0b00100,
-    0b00000,
-    0b00000,
-    0b00000,
-    0b00000,
-};
+#define LCD_WIDTH 16
+#define SUNNY_EMOJI byte('S')
+#define CLOUDY_EMOJI byte(1)  
 
 byte clouds[8] = {
     0b00000,
@@ -22,57 +16,63 @@ byte clouds[8] = {
 
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-void setupLCD()
-{
+char line[] = "Temp (F): 00, Humidity: 00% Brightness: 00%";
+
+int start = 0;
+
+void setupLCD() {
     lcd.begin(16, 2);
-
-    lcd.createChar(WEATHER_EMOJI_DEGREES, degrees);
-    lcd.createChar(WEATHER_EMOJI_CLOUDY, clouds);
-
-    lcd.setCursor(10, 0);
-    lcd.print(":");
-    lcd.setCursor(13, 0);
-    lcd.print(":");
-
-    lcd.setCursor(3, 1);
-    lcd.write(WEATHER_EMOJI_DEGREES);
-
-    lcd.setCursor(10, 1);
-    lcd.print("%");
-    lcd.setCursor(15, 1);
-    lcd.print("%");
+    lcd.createChar(CLOUDY_EMOJI, clouds);
 }
 
-void writeWeatherEmoji(byte b)
-{
-    lcd.setCursor(0, 0);
-    lcd.write(b);
+void refreshLCD() {
+    lcd.setCursor(0, 1);
+    for (int i = start; i < start + LCD_WIDTH; i++) {
+        lcd.write(line[i % sizeof(line)]);
+    }
 }
 
-void writeBrightness(uint8_t v)
-{
-    lcd.setCursor(13, 1);
-    lcd.print(v);
+void scrollLCD() {
+    start++;
 }
 
-void writeTemp(uint8_t v)
-{
-    lcd.setCursor(1, 1);
-    lcd.print(v);
+void updateBrightness(uint8_t v) {
+    sprintf(line + 40, "%02" PRIu8, v);
 }
 
-void writeHumidity(uint8_t v)
-{
-    lcd.setCursor(8, 1);
-    lcd.print(v);
+void updateTemp(uint8_t v) {
+    sprintf(line + 10, "%02" PRIu8, v);
 }
 
-void writeClock(const Clock &clock)
-{
+void updateHumidity(uint8_t v) {
+    sprintf(line + 24, "%02" PRIu8, v);
+}
+
+void updateClock(const Clock &clock) {
+    char ts[9];
+    sprintf(ts, "%02" PRIu8, clock.h);
+    ts[2] = ':';
+    sprintf(ts + 3, "%02" PRIu8, clock.m);
+    ts[5] = ':';
+    sprintf(ts + 6, "%02" PRIu8, clock.s);
     lcd.setCursor(8, 0);
-    lcd.print(clock.h);
-    lcd.setCursor(11, 0);
-    lcd.print(clock.m);
-    lcd.setCursor(13, 0);
-    lcd.print(clock.s);
+    lcd.print(ts);
+}
+
+void updateWeatherConditions(byte b) {
+    switch (b) {
+        case SUNNY_WEATHER:
+            lcd.setCursor(0, 0);
+            lcd.write(SUNNY_EMOJI);
+            lcd.write(SUNNY_EMOJI);
+            lcd.write(SUNNY_EMOJI);
+            break;
+        case CLOUDY_WEATHER:
+            lcd.setCursor(0, 0);
+            lcd.write(CLOUDY_EMOJI);
+            lcd.write(CLOUDY_EMOJI);
+            lcd.write(CLOUDY_EMOJI);
+            break;
+    }
+    
 }

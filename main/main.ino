@@ -16,12 +16,14 @@
 #define LED_EXTERNAL 36
 
 TaskHandle_t RT1_H;
-TaskHandle_t WriteLCD_H;
+TaskHandle_t SetupLCD_H;
+TaskHandle_t RefreshLCD_H;
 TaskHandle_t ReadEnv_H;
 QueueHandle_t Env_QH;
 
 void RT1_T(void *pvParameters);
-void WriteLCD_T(void *pvParameters);
+void SetupLCD_T(void *pvParameters);
+void RefreshLCD_T(void *pvParameters);
 void ReadEnv_T(void *pvParameters);
 
 typedef struct Environment {
@@ -35,7 +37,7 @@ void setup() {
   Serial.begin(115200);
   while (!Serial);
   xTaskCreate(RT1_T, "RT1_T", 512, NULL, 3, &RT1_H);
-  xTaskCreate(WriteLCD_T, "WriteLCD_T", 256, NULL, 3, &WriteLCD_H);
+  xTaskCreate(SetupLCD_T, "SetupLCD_T", 256, NULL, 3, &SetupLCD_H);
   xTaskCreate(ReadEnv_T, "ReadEnv_T", 512, NULL, 3, &ReadEnv_H);
   vTaskStartScheduler();
 }
@@ -52,20 +54,39 @@ void RT1_T(void *pvParameters) {
   }
 }
 
-void WriteLCD_T(void *pvParameters) {
+void SetupLCD_T(void *pvParameters) {
   setupSensors();
   setupLCD();
+  xTaskCreate(RefreshLCD_T, "RefreshLCD_T", 256, NULL, 3, &RefreshLCD_H);
+  vTaskDelete(NULL);
+}
 
+void RefreshLCD_T(void *pvParameters) {
   Environment env;
+  uint32_t count = 0;
   for (;;) {
     if (xQueueReceive(Env_QH, &env, 1) == pdTRUE) {
-      writeBrightness(env.brightness);
-      writeTemp(env.temperature);
-      writeHumidity(env.humidity);
-      writeClock(env.clock);
+      updateBrightness(env.brightness);
+      updateTemp(env.temperature);
+      updateHumidity(env.humidity);
+      updateClock(env.clock);
+      
+      if (env.brightness > 60)
+        updateWeatherConditions(SUNNY_WEATHER);
+      else
+        updateWeatherConditions(CLOUDY_WEATHER);
 
-      writeWeatherEmoji(WEATHER_EMOJI_CLOUDY);
+      refreshLCD();
     }
+
+    // scrolling implemented within this task to avoid issues
+    // between two tasks concurrently using the display
+    if (count % 40 == 0) {
+      scrollLCD();
+    }
+    
+    vTaskDelay(25 / portTICK_PERIOD_MS); // P = 25 ms
+    count++;
   }
 }
 
