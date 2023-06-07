@@ -14,6 +14,8 @@
 
 #define CLOUDY_WEATHER 0
 #define SUNNY_WEATHER 1
+#define MOON_WEATHER 2
+#define RAIN_WEATHER 3
 
 void setupLCD();
 

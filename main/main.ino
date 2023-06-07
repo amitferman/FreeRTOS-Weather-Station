@@ -37,7 +37,7 @@ void setup() {
   Serial.begin(115200);
   while (!Serial);
   xTaskCreate(RT1_T, "RT1_T", 512, NULL, 3, &RT1_H);
-  xTaskCreate(SetupLCD_T, "SetupLCD_T", 256, NULL, 3, &SetupLCD_H);
+  xTaskCreate(SetupLCD_T, "SetupLCD_T", 1024, NULL, 3, &SetupLCD_H);
   xTaskCreate(ReadEnv_T, "ReadEnv_T", 512, NULL, 3, &ReadEnv_H);
   vTaskStartScheduler();
 }
@@ -55,6 +55,7 @@ void RT1_T(void *pvParameters) {
 }
 
 void SetupLCD_T(void *pvParameters) {
+  setupClock(); // TODO : move
   setupSensors();
   setupLCD();
   xTaskCreate(RefreshLCD_T, "RefreshLCD_T", 256, NULL, 3, &RefreshLCD_H);
@@ -71,10 +72,17 @@ void RefreshLCD_T(void *pvParameters) {
       updateHumidity(env.humidity);
       updateClock(env.clock);
       
-      if (env.brightness > 60)
-        updateWeatherConditions(SUNNY_WEATHER);
-      else
-        updateWeatherConditions(CLOUDY_WEATHER);
+      if (env.clock.h < 7 && env.clock.h > 20) { // 10pm to 7am
+        updateWeatherConditions(MOON_WEATHER);
+      } else {
+        if (env.brightness > 60) {
+          updateWeatherConditions(SUNNY_WEATHER);
+        } else if (env.humidity > 80) {
+          updateWeatherConditions(RAIN_WEATHER);
+        } else {
+          updateWeatherConditions(CLOUDY_WEATHER);
+        }
+      }
 
       refreshLCD();
     }
@@ -85,7 +93,7 @@ void RefreshLCD_T(void *pvParameters) {
       scrollLCD();
     }
     
-    vTaskDelay(25 / portTICK_PERIOD_MS); // P = 25 ms
+    vTaskDelay(15 / portTICK_PERIOD_MS); // P = 15 ms
     count++;
   }
 }

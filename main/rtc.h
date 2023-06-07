@@ -9,6 +9,8 @@ typedef struct Clock {
   uint8_t s;
 } Clock;
 
+void setupClock();
+
 void readClock(Clock *const clock);
 
 #endif // _RTC_H_

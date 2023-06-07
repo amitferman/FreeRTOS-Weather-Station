@@ -1,8 +1,11 @@
 #include "display.h"
 
 #define LCD_WIDTH 16
-#define SUNNY_EMOJI byte('S')
-#define CLOUDY_EMOJI byte(1)  
+#define SUNNY_EMOJI byte('*')
+#define CLOUDY_EMOJI byte(1) 
+#define DEGREE_EMOJI byte(2) 
+#define MOON_EMOJI byte(3) 
+#define RAIN_EMOJI byte(4) 
 
 byte clouds[8] = {
     0b00000,
@@ -14,21 +17,55 @@ byte clouds[8] = {
     0b00000,
 };
 
+byte degree[8] = {
+    0b00100,
+    0b01010,
+    0b00100,
+    0b00000,
+    0b00000,
+    0b00000,
+    0b00000,
+};
+
+byte moon[8] = {
+    0b00000,
+    0b01110,
+    0b11100,
+    0b11000,
+    0b11100,
+    0b01110,
+    0b00000,
+};
+
+byte rain[8] = {
+    0b00000,
+    0b00100,
+    0b01001,
+    0b00010,
+    0b01000,
+    0b10010,
+    0b00100,
+};
+
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-char line[] = "Temp (F): 00, Humidity: 00% Brightness: 00%";
+char line[] = "Temp (F): 00_ Humidity: 00_ Brightness: 00_ ";
+uint8_t l = strlen(line);
 
 int start = 0;
 
 void setupLCD() {
     lcd.begin(16, 2);
     lcd.createChar(CLOUDY_EMOJI, clouds);
+    lcd.createChar(DEGREE_EMOJI, degree);
+    lcd.createChar(MOON_EMOJI, moon);
+    lcd.createChar(RAIN_EMOJI, rain);
 }
 
 void refreshLCD() {
     lcd.setCursor(0, 1);
     for (int i = start; i < start + LCD_WIDTH; i++) {
-        lcd.write(line[i % sizeof(line)]);
+        lcd.print(line[i % l]);
     }
 }
 
@@ -37,15 +74,18 @@ void scrollLCD() {
 }
 
 void updateBrightness(uint8_t v) {
-    sprintf(line + 40, "%02" PRIu8, v);
+    snprintf(line + 40, 3, "%02" PRIu8, v);
+    line[42] = '%';
 }
 
 void updateTemp(uint8_t v) {
-    sprintf(line + 10, "%02" PRIu8, v);
+    snprintf(line + 10, 3, "%02" PRIu8, v);
+    line[12] = DEGREE_EMOJI;
 }
 
 void updateHumidity(uint8_t v) {
-    sprintf(line + 24, "%02" PRIu8, v);
+    snprintf(line + 24, 3, "%02" PRIu8, v);
+    line[26] = '%';
 }
 
 void updateClock(const Clock &clock) {
@@ -64,14 +104,26 @@ void updateWeatherConditions(byte b) {
         case SUNNY_WEATHER:
             lcd.setCursor(0, 0);
             lcd.write(SUNNY_EMOJI);
-            lcd.write(SUNNY_EMOJI);
-            lcd.write(SUNNY_EMOJI);
+            lcd.print(' ');
+            lcd.print(' ');
             break;
         case CLOUDY_WEATHER:
             lcd.setCursor(0, 0);
             lcd.write(CLOUDY_EMOJI);
             lcd.write(CLOUDY_EMOJI);
             lcd.write(CLOUDY_EMOJI);
+            break;
+        case MOON_WEATHER:
+            lcd.setCursor(0, 0);
+            lcd.write(MOON_EMOJI);
+            lcd.print(' ');
+            lcd.print(' ');
+            break;
+        case RAIN_WEATHER:
+            lcd.setCursor(0, 0);
+            lcd.write(RAIN_EMOJI);
+            lcd.print(RAIN_EMOJI);
+            lcd.print(RAIN_EMOJI);
             break;
     }
     
