@@ -1,3 +1,13 @@
+/* University of Washington
+ * ECE/CSE 474, 05/26/2023
+ *
+ * Amit Ferman
+ * Austin Kennedy
+ * 
+ * Implements API for formatting and displaying data
+ * on an LCD display.
+ */
+
 #include "display.h"
 
 #define LCD_WIDTH 16
@@ -7,6 +17,7 @@
 #define MOON_EMOJI byte(3) 
 #define RAIN_EMOJI byte(4) 
 
+// defines pixel values for cloud character
 byte clouds[8] = {
     0b00000,
     0b01100,
@@ -17,6 +28,7 @@ byte clouds[8] = {
     0b00000,
 };
 
+// defines pixel values for degree character
 byte degree[8] = {
     0b00100,
     0b01010,
@@ -27,6 +39,7 @@ byte degree[8] = {
     0b00000,
 };
 
+// defines pixel values for moon character
 byte moon[8] = {
     0b00000,
     0b01110,
@@ -37,6 +50,7 @@ byte moon[8] = {
     0b00000,
 };
 
+// defines pixel values for rain character
 byte rain[8] = {
     0b00000,
     0b00100,
@@ -47,12 +61,13 @@ byte rain[8] = {
     0b00100,
 };
 
+// display handle
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
+// line to display on second row
 char line[] = "Temp (F): 00_ Humidity: 00_ Brightness: 00_ ";
-uint8_t l = strlen(line);
-
-int start = 0;
+uint8_t l = strlen(line); // cache length for faster display
+int start = 0; // offset of first character, for scrolling
 
 void setupLCD() {
     lcd.begin(16, 2);
@@ -126,5 +141,4 @@ void updateWeatherConditions(byte b) {
             lcd.print(RAIN_EMOJI);
             break;
     }
-    
 }

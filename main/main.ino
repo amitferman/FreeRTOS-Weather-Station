@@ -3,6 +3,8 @@
  *
  * Amit Ferman
  * Austin Kennedy
+ * 
+ * Entry point for FreeRTOS Weather Station.
  */
 
 #include <Arduino_FreeRTOS.h>
@@ -15,17 +17,45 @@
 
 #define LED_EXTERNAL 36
 
+// Task handles
 TaskHandle_t RT1_H;
 TaskHandle_t SetupLCD_H;
 TaskHandle_t RefreshLCD_H;
 TaskHandle_t ReadEnv_H;
+
+// Queue handle for sharing environment data between tasks
 QueueHandle_t Env_QH;
 
+
+/***************************************************
+* void RT1(void *pvParameters)
+*
+* See lab spec.
+*/
 void RT1_T(void *pvParameters);
+
+/***************************************************
+* SetupLCD_T(void *pvParameters)
+*
+* Initializes LCD and sensors.
+*/
 void SetupLCD_T(void *pvParameters);
+
+/***************************************************
+* RefreshLCD_T(void *pvParameters)
+*
+* Refreshes LCD with most recent environment data.
+*/
 void RefreshLCD_T(void *pvParameters);
+
+/***************************************************
+* ReadEnv_T(void *pvParameters)
+*
+* Samples the most recent environment data.
+*/
 void ReadEnv_T(void *pvParameters);
 
+// An Environment describes all sensor data.
 typedef struct Environment {
   Clock clock;
   uint8_t brightness;
@@ -33,6 +63,11 @@ typedef struct Environment {
   uint8_t humidity;
 } Environment;
 
+/***************************************************
+* setup();
+*
+* Initializes FreeRTOS kernel with tasks.
+*/
 void setup() {
   Serial.begin(115200);
   while (!Serial);
@@ -42,6 +77,12 @@ void setup() {
   vTaskStartScheduler();
 }
 
+
+/***************************************************
+* loop()
+*
+* Do nothing.
+*/
 void loop() {}
 
 void RT1_T(void *pvParameters) {
@@ -55,7 +96,7 @@ void RT1_T(void *pvParameters) {
 }
 
 void SetupLCD_T(void *pvParameters) {
-  setupClock(); // TODO : move
+  setupClock();
   setupSensors();
   setupLCD();
   xTaskCreate(RefreshLCD_T, "RefreshLCD_T", 256, NULL, 3, &RefreshLCD_H);
